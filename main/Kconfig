@@ -1,0 +1,25 @@
+menu "Laser Harp Configuration"
+
+    config LASER_SIMULATION_MODE
+        bool "Enable Simulation Mode"
+        default n
+        help
+            If enabled, DAC writes are disabled and coordinates are printed to UART.
+            Useful for debugging without hardware.
+
+    config WIFI_AP_SSID
+        string "WiFi AP SSID"
+        default "LaserHarp_Config"
+
+    config WIFI_AP_PASS
+        string "WiFi AP Password"
+        default "laserharp"
+
+    config SCAN_RATE_KPPS
+        int "Scan Rate (kpps)"
+        default 30
+        range 10 40
+        help
+            Target point rate in thousands of points per second.
+
+endmenu

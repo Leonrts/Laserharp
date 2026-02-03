@@ -1,0 +1,17 @@
+Reference,Value,Footprint,Qty,Description
+U4,ESP32-S3-WROOM-1,RF_Module:ESP32-S3-WROOM-1,1,Espressif MCU Module
+U1,MCP4922-E/SL,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,1,12-Bit Dual DAC
+U2,MCP4922-E/SL,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,1,12-Bit Dual DAC
+U3,MCP4922-E/SL,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,1,12-Bit Dual DAC
+U5,TL074,Package_DIP:DIP-14_W7.62mm,1,Quad JFET OpAmp
+U6,TL074,Package_DIP:DIP-14_W7.62mm,1,Quad JFET OpAmp
+U7,OPA358,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,1,Rail-to-Rail OpAmp (TIA)
+U8,LM393,Package_DIP:DIP-8_W7.62mm,1,Dual Comparator
+U9,74HCT125,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,1,Quad Buffer / Level Shifter
+U10,B0512LS-1WR3,Converter_DCDC:Converter_DCDC_Mornsun_B0512LS-1WR3,1,DC-DC 5V to +/-12V
+U11,AMS1117-3.3,Package_TO_SOT_SMD:SOT-223-3_TabPin2,1,LDO 3.3V 800mA
+J1,DB25_Female,Connector_Dsub:DSUB-25_Female_Horizontal_Pitch2.77x2.84mm_EdgePinOffset4.94mm_Housed_MountingHolesOffset6.3mm,1,ILDA Connector
+D1,BPW34,OptoDevice:BPW34,1,Photodiode
+C1-C10,0.1uF,Capacitor_SMD:C_0603_1608Metric,10,Decoupling Caps
+C11-C14,10uF,Capacitor_SMD:C_0805_2012Metric,4,Bulk Caps
+R1-R10,10k,Resistor_SMD:R_0603_1608Metric,10,Pullups / OpAmp Gain

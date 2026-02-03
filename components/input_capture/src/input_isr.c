@@ -1,0 +1,36 @@
+#include "input_capture.h"
+#include "driver/gpio.h"
+#include "esp_attr.h"
+
+static input_callback_t s_callback = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg) {
+    if (s_callback) {
+        s_callback();
+    }
+}
+
+void input_capture_init(int pin, input_callback_t cb) {
+    s_callback = cb;
+
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_POSEDGE; // Trigger on rising edge (Light detected)
+    io_conf.pin_bit_mask = (1ULL << pin);
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pull_up_en = 0;
+    io_conf.pull_down_en = 1; // Pull down so light pulls up?
+    // OpAmp usually drives actively. If OpAmp Output is Push-Pull, no pull needed.
+    // Comparator (LM393) is Open Collector! Needs Pull-Up.
+    // If LM393 Out -> GPIO. We need Pull-Up.
+    // When Light -> Input +, V > Ref -> Output High (Open).
+    // So default is Low? No, Open Collector pulls Low when V- > V+.
+    // If No Light (Dark): V+ (Sensor) < V- (Ref). Output Low (GND).
+    // If Light: V+ > V-. Output Open (Pull Up to Vcc).
+    // So we detect Rising Edge.
+    io_conf.pull_up_en = 1;
+    io_conf.pull_down_en = 0;
+    gpio_config(&io_conf);
+
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(pin, gpio_isr_handler, (void*) pin);
+}
