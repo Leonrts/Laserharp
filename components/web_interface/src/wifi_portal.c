@@ -1,6 +1,8 @@
 #include "web_interface.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -24,23 +26,35 @@ static const char* index_html_fmt =
 "<button type='submit'>Save & Reboot</button>"
 "</form></body></html>";
 
-static esp_err_t root_get_handler(httpd_req_t *req) {
-    // Read current config
-    nvs_handle_t my_handle;
-    int base = 60;
-    int count = 8;
+// Cached configuration
+static int s_base_note = 60;
+static int s_str_count = 8;
+static bool s_config_loaded = false;
 
+static void load_config(void) {
+    if (s_config_loaded) return;
+
+    nvs_handle_t my_handle;
     esp_err_t err = nvs_open("storage", NVS_READONLY, &my_handle);
     if (err == ESP_OK) {
-        nvs_get_i32(my_handle, "base_note", &base);
-        nvs_get_i32(my_handle, "str_count", &count);
+        nvs_get_i32(my_handle, "base_note", &s_base_note);
+        nvs_get_i32(my_handle, "str_count", &s_str_count);
         nvs_close(my_handle);
     }
+    s_config_loaded = true;
+}
 
-    char *resp_str = malloc(strlen(index_html_fmt) + 20);
-    sprintf(resp_str, index_html_fmt, base, count);
+static esp_err_t root_get_handler(httpd_req_t *req) {
+    // Ensure config is loaded (just in case)
+    if (!s_config_loaded) {
+        load_config();
+    }
+
+    // Use stack buffer instead of malloc - format string is ~618 bytes, 1024 is safe
+    char resp_str[1024];
+    snprintf(resp_str, sizeof(resp_str), index_html_fmt, s_base_note, s_str_count);
+
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
-    free(resp_str);
     return ESP_OK;
 }
 
@@ -162,5 +176,6 @@ void web_interface_init(void) {
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s",
              "LaserHarp_Config", "laserharp");
 
+    load_config();
     start_webserver();
 }
