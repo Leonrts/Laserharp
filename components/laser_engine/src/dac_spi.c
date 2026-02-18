@@ -66,31 +66,27 @@ void dac_init(void) {
 
 // Internal helper to send to one DAC
 static void send_dac(spi_device_handle_t handle, uint16_t val_a, uint16_t val_b) {
-    spi_transaction_t t;
-    uint16_t data;
+    uint16_t data_a = MCP4922_CMD_A | (val_a & 0x0FFF);
+    uint16_t data_b = MCP4922_CMD_B | (val_b & 0x0FFF);
 
-    // Send Channel A
-    memset(&t, 0, sizeof(t));
-    data = MCP4922_CMD_A | (val_a & 0x0FFF);
-    // SPI driver sends MSB first by default.
-    // MCP4922 expects MSB first.
-    // However, ESP32 is Little Endian. We must swap bytes?
-    // SPI_SWAP_DATA_TX takes care of it? Or SPI_DEVICE_TXBIT_LSBFIRST?
-    // Default is MSB First.
-    // If I send 0x7000 (uint16), in memory it is 00 70.
-    // SPI driver reads byte by byte?
-    // If SPI_USE_TXDATA is set, it uses the array.
-    // Let's use SPI_SWAP_DATA_TX in flags.
-    t.length = 16;
-    t.tx_buffer = &data;
-    // Actually, simply swapping bytes manually is safer.
-    data = (data >> 8) | (data << 8);
+    // Swap bytes: 0x7000 -> 0x0070 (MCP4922 expects MSB first, but ESP32 is LE)
+    data_a = (data_a >> 8) | (data_a << 8);
+    data_b = (data_b >> 8) | (data_b << 8);
+
+    spi_transaction_t t = {
+        .flags = SPI_TRANS_USE_TXDATA,
+        .length = 16,
+        .tx_data = {
+            (uint8_t)(data_a & 0xFF),
+            (uint8_t)((data_a >> 8) & 0xFF),
+        },
+    };
+
     ESP_ERROR_CHECK(spi_device_polling_transmit(handle, &t));
 
-    // Send Channel B
-    data = MCP4922_CMD_B | (val_b & 0x0FFF);
-    data = (data >> 8) | (data << 8);
-    t.tx_buffer = &data;
+    // Send Channel B (reuse transaction struct)
+    t.tx_data[0] = (uint8_t)(data_b & 0xFF);
+    t.tx_data[1] = (uint8_t)((data_b >> 8) & 0xFF);
     ESP_ERROR_CHECK(spi_device_polling_transmit(handle, &t));
 }
 
