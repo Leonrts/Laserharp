@@ -17,7 +17,7 @@ class KiCadSchematicGenerator:
     def add_lib_symbol(self, name, pins):
         # Create a simplified symbol definition embedded in the file
         # pins is a list of (number, name, type, x, y, orientation)
-        symbol_def = f"""
+        symbol_parts = [f"""
   (symbol "{name}" (in_bom yes) (on_board yes)
     (property "Reference" "U" (id 0) (at 0 0 0)
       (effects (font (size 1.27 1.27)))
@@ -33,20 +33,21 @@ class KiCadSchematicGenerator:
         (stroke (width 0) (type default) (color 0 0 0 0))
         (fill (type background))
       )
-"""
+"""]
+
         for num, pname, ptype, x, y, rot in pins:
             # pin format: (pin type shape (at x y rot) (length 2.54)
             #   (name "PinName" (effects (font (size 1.27 1.27))))
             #   (number "PinNum" (effects (font (size 1.27 1.27))))
             # )
             # rot: 0=right, 90=up, 180=left, 270=down
-            symbol_def += f"""      (pin {ptype} line (at {x} {y} {rot}) (length 2.54)
+            symbol_parts.append(f"""      (pin {ptype} line (at {x} {y} {rot}) (length 2.54)
         (name "{pname}" (effects (font (size 1.27 1.27))))
         (number "{num}" (effects (font (size 1.27 1.27))))
       )
-"""
-        symbol_def += "    )\n  )"
-        self.lib_symbols.append(symbol_def)
+""")
+        symbol_parts.append("    )\n  )")
+        self.lib_symbols.append("".join(symbol_parts))
 
     def add_instance(self, lib_name, ref, value, x, y):
         u = self.generate_uuid()
