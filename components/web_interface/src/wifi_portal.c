@@ -37,10 +37,9 @@ static esp_err_t root_get_handler(httpd_req_t *req) {
         nvs_close(my_handle);
     }
 
-    char *resp_str = malloc(strlen(index_html_fmt) + 20);
-    sprintf(resp_str, index_html_fmt, base, count);
+    char resp_str[1024];
+    snprintf(resp_str, sizeof(resp_str), index_html_fmt, base, count);
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
-    free(resp_str);
     return ESP_OK;
 }
 
