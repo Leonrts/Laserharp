@@ -86,6 +86,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
         case ESP_GATTS_ADD_CHAR_EVT: {
             midi_handle_table[0] = param->add_char.attr_handle;
+            // Add config descriptor (CCCD) for notifications
             esp_bt_uuid_t descr_uuid;
             descr_uuid.len = ESP_UUID_LEN_16;
             descr_uuid.uuid.uuid16 = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
@@ -96,6 +97,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
         case ESP_GATTS_ADD_CHAR_DESCR_EVT:
             midi_handle_table[1] = param->add_char_descr.attr_handle;
+            ESP_LOGI(TAG, "Added CCCD handle: %d", midi_handle_table[1]);
             break;
 
         case ESP_GATTS_WRITE_EVT:
