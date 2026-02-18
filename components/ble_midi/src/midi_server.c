@@ -26,6 +26,7 @@ static uint16_t midi_handle_table[4];
 static esp_gatt_if_t gatts_if_global = 0;
 static uint16_t conn_id_global = 0;
 static bool connected = false;
+static bool notifications_enabled = false;
 
 static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
@@ -88,7 +89,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             // Add config descriptor (CCCD) for notifications
             esp_bt_uuid_t descr_uuid;
             descr_uuid.len = ESP_UUID_LEN_16;
-            descr_uuid.uuid.uuid16 = 0x2902;
+            descr_uuid.uuid.uuid16 = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
             esp_ble_gatts_add_char_descr(param->add_char.service_handle, &descr_uuid,
                 ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, NULL, NULL);
             break;
@@ -99,6 +100,22 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             ESP_LOGI(TAG, "Added CCCD handle: %d", midi_handle_table[1]);
             break;
 
+        case ESP_GATTS_WRITE_EVT:
+            if (!param->write.is_prep && param->write.handle == midi_handle_table[1] && param->write.len == 2) {
+                uint16_t descr_value = param->write.value[1] << 8 | param->write.value[0];
+                if (descr_value & 0x0001) {
+                    notifications_enabled = true;
+                    ESP_LOGI(TAG, "Notifications enabled");
+                } else {
+                    notifications_enabled = false;
+                    ESP_LOGI(TAG, "Notifications disabled");
+                }
+            }
+            if (param->write.need_rsp) {
+                esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+            }
+            break;
+
         case ESP_GATTS_CONNECT_EVT:
             conn_id_global = param->connect.conn_id;
             connected = true;
@@ -106,6 +123,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
         case ESP_GATTS_DISCONNECT_EVT:
             connected = false;
+            notifications_enabled = false;
             esp_ble_gap_start_advertising(NULL); // Restart adv
             break;
         default:
@@ -114,7 +132,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 }
 
 void ble_midi_send_packet(uint8_t *data, size_t len) {
-    if (connected && midi_handle_table[0] != 0) {
+    if (connected && notifications_enabled && midi_handle_table[0] != 0) {
         esp_ble_gatts_send_indicate(gatts_if_global, conn_id_global, midi_handle_table[0], len, data, false);
     }
 }
