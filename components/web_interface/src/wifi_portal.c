@@ -5,6 +5,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_http_server.h"
+#include "esp_timer.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "lwip/err.h"
@@ -51,6 +52,11 @@ static int get_param_value(char *buf, const char *param_name) {
     return atoi(start);
 }
 
+static void restart_timer_callback(void* arg) {
+    ESP_LOGI(TAG, "Restarting now...");
+    esp_restart();
+}
+
 static esp_err_t save_post_handler(httpd_req_t *req) {
     char buf[100];
     int ret, remaining = req->content_len;
@@ -82,9 +88,14 @@ static esp_err_t save_post_handler(httpd_req_t *req) {
 
     httpd_resp_send(req, "Configuration Saved. Rebooting...", HTTPD_RESP_USE_STRLEN);
 
-    // Reboot after delay
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    esp_restart();
+    // Create and start a one-shot timer to reboot after 1 second
+    const esp_timer_create_args_t restart_timer_args = {
+            .callback = &restart_timer_callback,
+            .name = "restart_timer"
+    };
+    esp_timer_handle_t restart_timer;
+    esp_timer_create(&restart_timer_args, &restart_timer);
+    esp_timer_start_once(restart_timer, 1000000); // 1,000,000 us = 1 second
 
     return ESP_OK;
 }
