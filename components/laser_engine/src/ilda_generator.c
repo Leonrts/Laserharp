@@ -76,7 +76,13 @@ void laser_engine_task(void *arg) {
             // Move to bottom (Blanking)
             ilda_point_t p_move = {x, 0, 0, 0, 0, 0};
             dac_output_point(p_move);
-            esp_rom_delay_us(point_period_us);
+
+            // Timing for Blanking Point
+            int64_t now = esp_timer_get_time();
+            if (now < next_frame_time) {
+                esp_rom_delay_us(next_frame_time - now);
+            }
+            next_frame_time += point_period_us;
 
             // Draw String (Upwards)
             // Color: Red if active, Green if inactive (Visual Feedback)
@@ -90,9 +96,9 @@ void laser_engine_task(void *arg) {
                 dac_output_point(p_draw);
 
                 // Timing
-                int64_t now = esp_timer_get_time();
-                while (now < next_frame_time) {
-                    now = esp_timer_get_time();
+                now = esp_timer_get_time();
+                if (now < next_frame_time) {
+                    esp_rom_delay_us(next_frame_time - now);
                 }
                 next_frame_time += point_period_us;
             }
@@ -128,7 +134,8 @@ void laser_engine_task(void *arg) {
 
         // 3. Frame Rate Control / Yield
         // Minimize delay to keep scanning fast.
-        // Yield is necessary for Watchdog (Core 1 WDT).
+        // vTaskDelay(1) is necessary for Watchdog (Core 1 WDT) and better than taskYIELD()
+        // which may starve the Idle task on the core.
         vTaskDelay(1);
         next_frame_time = esp_timer_get_time();
     }

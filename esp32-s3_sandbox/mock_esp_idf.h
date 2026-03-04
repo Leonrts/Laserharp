@@ -42,4 +42,16 @@ static inline void spi_device_polling_transmit(void *handle, spi_transaction_t *
 #define MCP4922_CMD_A 0x7000
 #define MCP4922_CMD_B 0xF000
 
+// Adding esp_timer and esp_rom functions for benchmarking
+static inline int64_t esp_timer_get_time(void) {
+    // Return something that changes to simulate time
+    static int64_t time = 0;
+    return time++;
+}
+
+static inline void esp_rom_delay_us(uint32_t us) {
+    // Simulate delay
+    g_dummy_accum += us;
+}
+
 #endif // MOCK_ESP_IDF_H
