@@ -73,14 +73,13 @@ static void send_dac(spi_device_handle_t handle, uint16_t val_a, uint16_t val_b)
     data_a = (data_a >> 8) | (data_a << 8);
     data_b = (data_b >> 8) | (data_b << 8);
 
-    spi_transaction_t t = {
+    static spi_transaction_t t = {
         .flags = SPI_TRANS_USE_TXDATA,
         .length = 16,
-        .tx_data = {
-            (uint8_t)(data_a & 0xFF),
-            (uint8_t)((data_a >> 8) & 0xFF),
-        },
     };
+
+    t.tx_data[0] = (uint8_t)(data_a & 0xFF);
+    t.tx_data[1] = (uint8_t)((data_a >> 8) & 0xFF);
 
     ESP_ERROR_CHECK(spi_device_polling_transmit(handle, &t));
 
