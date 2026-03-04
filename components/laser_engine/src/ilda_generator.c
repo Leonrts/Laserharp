@@ -84,8 +84,13 @@ void laser_engine_task(void *arg) {
             uint8_t g = s_string_state[i] ? 0 : 255;
 
             // 10 points per string
+            // Precomputed Y values for (4095 * k) / 10 to save CPU cycles
+            static const uint16_t y_lookup[11] = {
+                0, 409, 819, 1228, 1638, 2047, 2457, 2866, 3276, 3685, 4095
+            };
+
             for (int k=0; k<=10; k++) {
-                uint16_t y = (4095 * k) / 10;
+                uint16_t y = y_lookup[k];
                 ilda_point_t p_draw = {x, y, r, g, 0, 255};
                 dac_output_point(p_draw);
 
