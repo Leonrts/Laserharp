@@ -17,6 +17,21 @@ void dac_output_point(ilda_point_t p);
 static const char *TAG = "LASER_ENGINE";
 static volatile bool s_engine_running = false;
 
+// Precomputed Y positions for strings (10 points per string)
+static const uint16_t s_y_points[11] = {
+    0,
+    (4095 * 1) / 10,
+    (4095 * 2) / 10,
+    (4095 * 3) / 10,
+    (4095 * 4) / 10,
+    (4095 * 5) / 10,
+    (4095 * 6) / 10,
+    (4095 * 7) / 10,
+    (4095 * 8) / 10,
+    (4095 * 9) / 10,
+    4095
+};
+
 // Configuration for the harp strings
 #define MAX_STRINGS 12
 static int s_num_strings = 8;
@@ -90,14 +105,14 @@ void laser_engine_task(void *arg) {
             };
 
             for (int k=0; k<=10; k++) {
-                uint16_t y = y_lookup[k];
+                uint16_t y = s_y_points[k];
                 ilda_point_t p_draw = {x, y, r, g, 0, 255};
                 dac_output_point(p_draw);
 
                 // Timing
                 int64_t now = esp_timer_get_time();
-                while (now < next_frame_time) {
-                    now = esp_timer_get_time();
+                if (now < next_frame_time) {
+                    esp_rom_delay_us(next_frame_time - now);
                 }
                 next_frame_time += point_period_us;
             }
