@@ -91,8 +91,8 @@ void laser_engine_task(void *arg) {
 
                 // Timing
                 int64_t now = esp_timer_get_time();
-                while (now < next_frame_time) {
-                    now = esp_timer_get_time();
+                if (now < next_frame_time) {
+                    esp_rom_delay_us(next_frame_time - now);
                 }
                 next_frame_time += point_period_us;
             }
