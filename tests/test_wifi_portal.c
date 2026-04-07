@@ -78,6 +78,7 @@ void test_root_get_handler() {
     // Test case 2: Changed values
     mock_base_note = 48;
     mock_str_count = 12;
+    s_config_loaded = false; // Reset static flag
     res = root_get_handler(&req);
     assert(res == ESP_OK);
     assert(strstr(last_response, "value='48'") != NULL);
